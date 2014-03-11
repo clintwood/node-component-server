@@ -1,0 +1,12 @@
+{
+  "name": "node-git-server",
+  "description": "HTTP Git repo service for in-house development.",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "win-spawn": "2.x",
+    "express": "3.x",
+    "pushover": "~1.3.4",
+    "mkdirp": "0.3.5"
+  }
+}

@@ -1,0 +1,8 @@
+_gitrepos
+node_modules
+logs
+robots.txt
+*.sublime-project
+*.sublime-workspace
+*.log
+*.bak
