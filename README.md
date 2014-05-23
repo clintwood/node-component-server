@@ -1,1 +1,1 @@
-A Node.js based Github like HTTP Git Server that understands user/repo style repositories.
+A Node.js based Github like HTTP Git/Component Server that understands `<component>/<repo>` style repositories.

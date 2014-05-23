@@ -1,3 +1,5 @@
+
+// deps
 var pushover = require('pushover');
 var express  = require('express');
 var app      = express();
@@ -253,6 +255,6 @@ app.get('*', function(req, res) {
 });
 
 var port = parseInt(process.env.GIT_REPO_PORT || config.GIT_REPO_PORT || '80');
-log.info('Node-Git-Server is listening on port: ' + port)
+log.info('Node-Component-Server is listening on port: ' + port)
 log.info('Repos Dir is: ' + path.resolve(repoDir));
 app.listen(port);

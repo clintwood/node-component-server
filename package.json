@@ -1,8 +1,8 @@
 {
-  "name": "node-git-server",
-  "description": "HTTP Git repo service for in-house development.",
+  "name": "node-component-server",
+  "description": "HTTP Git repo server for in-house development.",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.2",
   "dependencies": {
     "win-spawn": "2.x",
     "express": "3.x",
