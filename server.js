@@ -208,7 +208,7 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
 
     if (!found) {
       res.write('{"message": "Not Found"}');
-      res.send(404);
+      res.end(404);
       return;
     }
 
