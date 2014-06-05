@@ -207,8 +207,7 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
     res.setHeader('Content-Type', 'application/json charset=utf-8');
 
     if (!found) {
-      res.write('{"message": "Not Found"}');
-      res.end(404);
+      res.json(404, {message: "Not Found"});
       return;
     }
 
@@ -229,15 +228,13 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
     });
 
     git.stderr.on('data', function (data) {
-      res.write('{"message": "Not Found"}');
-      res.end(404);
+      res.json(404, {message: "Not Found"});
     });
 
     git.on('close', function (code) {
       // Setup headers for gzip response
       if (!tags) {
-        res.write('{"message": "Not Found"}');
-        res.end(404);
+        res.json(404, {message: "Not Found"});
         return;
       }
 
