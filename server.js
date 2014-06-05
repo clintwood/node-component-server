@@ -202,7 +202,12 @@ app.get('/repos/rm/:cat/:repo', function (req, res) {
 app.get('/repos/:cat/:repo/tags', function (req, res) {
   var repopath = req.params.cat + '/' + req.params.repo + '.git';
   repos.exists(repopath, function (found) {
+
+    // will always return json
+    res.setHeader('Content-Type', 'application/json charset=utf-8');
+
     if (!found) {
+      res.write('{"message": "Not Found"}');
       res.send(404);
       return;
     }
@@ -214,8 +219,6 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
       cwd: repoDir + '/' + repopath
     });
 
-    // will always return json
-    res.setHeader('Content-Type', 'application/json charset=utf-8');
 
     git.stdout.setEncoding('utf8');
     git.stdout.on('data', function (data) {
