@@ -214,6 +214,9 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
       cwd: repoDir + '/' + repopath
     });
 
+    // will always return json
+    res.setHeader('Content-Type', 'application/json charset=utf-8');
+
     git.stdout.setEncoding('utf8');
     git.stdout.on('data', function (data) {
       tags = data
@@ -223,13 +226,14 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
     });
 
     git.stderr.on('data', function (data) {
+      res.write('{"message": "Not Found"}');
       res.end(404);
     });
 
     git.on('close', function (code) {
       // Setup headers for gzip response
-      res.setHeader('Content-Type', 'application/json charset=utf-8');
       if (!tags) {
+        res.write('{"message": "Not Found"}');
         res.end(404);
         return;
       }
