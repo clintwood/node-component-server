@@ -38,7 +38,7 @@ var repos = pushover(repoDir, {
 })
 
 // monitor/log repo activity
-require('./lib/monitor.js')(repos);
+require('./lib/monitor.js')(repos, log);
 
 // utils
 
