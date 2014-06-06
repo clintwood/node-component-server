@@ -9,7 +9,11 @@ var config = require('./config.json');
 var path = require('path');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
-var logger = require('./logger.js');
+
+var Logger = require('./lib/logger.js');
+var padZero = require('./lib/utils').padZero;
+var canCompress = require('./lib/utils').canCompress;
+
 
 // when running as a service make sure to change to the source js' dir
 process.chdir(__dirname);
@@ -18,55 +22,25 @@ process.chdir(__dirname);
 var repoDir = process.env.GIT_REPO_DIR || config.GIT_REPO_DIR || path.join(__dirname, '/_gitrepos');
 var logFile = process.env.GIT_LOG_FILE || config.GIT_LOG_FILE || path.join(__dirname, '/_gitrepos.log');
 
-// ensure log & repo dirs exist
-if (!fs.existsSync(path.dirname(repoDir)))
+// ensure repo & logfile dirs exists
+if (!fs.existsSync(repoDir))
   mkdirp(path.dirname(repoDir));
 if (!fs.existsSync(path.dirname(logFile)))
   mkdirp(path.dirname(logFile));
 
 // init logging
-var log = new logger('info', fs.createWriteStream(logFile, {flags: 'a'}));
+var log = new Logger('info', fs.createWriteStream(logFile, {flags: 'a'}));
 log.debug('Logger started.')
 
-// set repo location
+// create repo server
 var repos = pushover(repoDir, {
   autoCreate: false
 })
 
-// push logging
-repos.on('push', function (info) {
-  log.info('Repo Push: %s', info.repo + '/' + info.commit + ' (' + info.branch + ')');
-  info.accept();
-});
-
-// tag logging
-repos.on('tag', function (info) {
-  log.info('Repo Tags: %s', info.repo + '/' + info.commit + ' (' + info.version + ')');
-  info.accept();
-});
-
-// fetch logging
-repos.on('fetch', function (info) {
-  log.info('Repo Fetch: %s', info.repo + '/' + info.commit);
-  info.accept();
-});
-
-// query logging
-repos.on('info', function (info) {
-  log.debug('Repo Query: %s', info.repo);
-  info.accept();
-});
+// monitor/log repo activity
+require('./lib/monitor.js')(repos);
 
 // utils
-
-function canCompress(req) {
-  var ae = req.header('accept-encoding');
-  return (ae && ~~ae.indexOf('gzip'));
-}
-
-function padZero(n) {
-  return ((n < 10) ? '0' : '') + n;
-}
 
 // some housekeeping commands
 
@@ -202,8 +176,9 @@ app.get('/repos/rm/:cat/:repo', function (req, res) {
 app.get('/repos/:cat/:repo/tags', function (req, res) {
   var repopath = req.params.cat + '/' + req.params.repo + '.git';
   repos.exists(repopath, function (found) {
+    var tags;
 
-    // will always return json
+    // this is an API call and will always return json
     res.setHeader('Content-Type', 'application/json charset=utf-8');
 
     if (!found) {
@@ -211,13 +186,10 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
       return;
     }
 
-    var tags;
-
-    // Spawn out to git archive to retrieve required file
+    // Spawn out to git tag -l to get list of tags
     var git = spawn('git', ['tag', '-l'], {
       cwd: repoDir + '/' + repopath
     });
-
 
     git.stdout.setEncoding('utf8');
     git.stdout.on('data', function (data) {
@@ -232,7 +204,7 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
     });
 
     git.on('close', function (code) {
-      // Setup headers for gzip response
+      // 404 if no tags
       if (!tags) {
         res.json(404, {message: "Not Found"});
         return;
