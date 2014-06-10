@@ -262,16 +262,9 @@ app.get('/:cat/:repo/tarball/:ref/:name', function (req, res) {
       cwd: repoDir + '/' + repopath
     });
 
-    // Setup headers for gzip response
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    // compress if requested
-    if (canCompress(req)) {
-      res.setHeader('Content-Encoding', 'gzip');
-      var gzip = zlib.createGzip();
-      git_archive.stdout.pipe(gzip).pipe(res);
-    } else {
-      git_archive.stdout.pipe(res);
-    }
+    res.setHeader('Content-Encoding', 'gzip');
+    var gzip = zlib.createGzip();
+    git_archive.stdout.pipe(gzip).pipe(res);
   });
 });
 
