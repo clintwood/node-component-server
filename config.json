@@ -1,5 +1,5 @@
 {
   "GIT_REPO_DIR": "../_gitrepos",
-  "GIT_LOG_FILE": "./_gitrepos.log",
+  "GIT_LOG_FILE": "./logs/_gitrepos.log",
   "GIT_REPO_PORT": "8282"
 }

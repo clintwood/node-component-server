@@ -157,7 +157,7 @@ app.get('/repos/rm/:cat/:repo', function (req, res) {
       res.send('Repo \'' + repopath + '\' does not exist.');
     } else {
       var d = new Date();
-      var graveyard = repopath + '-' + d.getFullYear() + padZero(d.getMonth() + 1) + padZero(d.getDate()) + '-' + padZero(d.getHours() + 1) + padZero(d.getMinutes())
+      var graveyard = repopath + '-' + d.getFullYear() + padZero(d.getMonth() + 1) + padZero(d.getDate()) + '-' + padZero(d.getHours()) + padZero(d.getMinutes())
 
       fs.rename(path.join(repoDir, repopath), path.join(repoDir, graveyard), function (err) {
         if (err) {
