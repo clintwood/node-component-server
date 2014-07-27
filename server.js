@@ -171,7 +171,7 @@ app.get('/repos/rm/:cat/:repo', function (req, res) {
 });
 
 // Catch requests for GitHub style tags request
-// Use:  http://<host>[:<port>]/<category>/<repo>/tags
+// Use:  http://<host>[:<port>]/repos/<category>/<repo>/tags
 // e.g.: http://localhost:8080/repos/servers/node-component-server/tags
 app.get('/repos/:cat/:repo/tags', function (req, res) {
   var repopath = req.params.cat + '/' + req.params.repo + '.git';
@@ -226,15 +226,95 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
   });
 });
 
+// Catch requests for GitHub style tree request
+// Use:  http://<host>[:<port>]/<category>/<repo>/tags
+// e.g.: http://localhost:8080/repos/servers/node-component-server/tags
+app.get('/repos/:cat/:repo/git/trees/:ref', function (req, res) {
+  var repopath = req.params.cat + '/' + req.params.repo + '.git';
+  repos.exists(repopath, function (found) {
+    var tree = {
+      sha: req.params.ref,
+      url: req.protocol + '://' + req.get('Host') + req.url
+    };
+
+    // this is an API call and will always return json
+    res.setHeader('Content-Type', 'application/json charset=utf-8');
+
+    if (!found) {
+      res.json(404, {message: "Not Found"});
+      return;
+    }
+
+    // Spawn out to do something like this:
+    // git ls-tree --full-tree -r -l 0.0.1
+    var args = ['ls-tree', '--full-tree', '-l'];
+    if (req.query['recursive'] === '1') args.push('-r');
+    args.push(req.params.ref)
+    var git = spawn('git', args , {
+      cwd: repoDir + '/' + repopath
+    });
+
+    var rx = /^(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(.+)$/;
+    git.stdout.setEncoding('utf8');
+    git.stdout.on('data', function (data) {
+      tree.tree = data
+        .split('\n')
+        .slice(0, -1)
+        .map(function (line) { 
+          var r = rx.exec(line);
+          return {
+            mode: r[1],
+            type: r[2],
+            sha:  r[3],
+            size: parseInt(r[4]),
+            path: r[5],
+            url: req.protocol + '://' + req.get('Host') + '/' + req.params.cat + '/' + req.params.repo + '/' + req.params.ref + '/' + r[5]
+          }; 
+        });
+    });
+
+    git.stderr.on('data', function (data) {
+      res.json(404, {message: "Not Found"});
+    });
+
+    git.on('close', function (code) {
+      // 404 if no tree
+      if (!tree.tree) {
+        res.json(404, {message: "Not Found"});
+        return;
+      }
+
+      var out = JSON.stringify(tree);
+      // compress if requested
+      if (canCompress(req)) {
+        res.setHeader('Content-Encoding', 'gzip');
+        zlib.gzip(out, function (err, data) {
+          res.write(data);
+          res.end();
+        });
+      } else {
+        res.write(out);
+        res.end();
+      }
+    });
+  });
+});
+
 // Catch git requests
 app.all(/^\/(.*)\.git/, function (req, res) {
   repos.handle(req, res);
 });
 
 // Catch requests for GitHub style npm tarballs and redirect with a reasonable name
+// Use:  http://<host>[:<port>]/repos/<category>/<repo>/tarball/<ref>
+// e.g.: http://localhost:8080/repos/client/person/tarball/master
+app.get('/repos/:cat/:repo/tarball/:ref', redirectForTarball);
+// Catch requests for GitHub style npm tarballs and redirect with a reasonable name
 // Use:  http://<host>[:<port>]/<category>/<repo>/tarball/<ref>
 // e.g.: http://localhost:8080/client/person/tarball/master
-app.get('/:cat/:repo/tarball/:ref', function (req, res) {
+app.get('/:cat/:repo/tarball/:ref', redirectForTarball);
+
+function redirectForTarball(req, res) {
   var repopath = req.params.cat + '/' + req.params.repo + '.git';
   repos.exists(repopath, function (found) {
     if (!found) {
@@ -244,7 +324,9 @@ app.get('/:cat/:repo/tarball/:ref', function (req, res) {
     // Redirect if we don't have a pretty name
     res.redirect(req.originalUrl + '/' + req.params.cat + '-' + req.params.repo + '-' + req.params.ref + '.tar.gz')
   });
-});
+}
+
+
 
 // Catch requests for GitHub style npm tarballs with a name
 // Use:  http://<host>[:<port>]/<category>/<repo>/tarball/<ref>/name
