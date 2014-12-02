@@ -309,6 +309,8 @@ app.all(/^\/(.*)\.git/, function (req, res) {
 // Use:  http://<host>[:<port>]/repos/<category>/<repo>/tarball/<ref>
 // e.g.: http://localhost:8080/repos/client/person/tarball/master
 app.get('/repos/:cat/:repo/tarball/:ref', redirectForTarball);
+
+
 // Catch requests for GitHub style npm tarballs and redirect with a reasonable name
 // Use:  http://<host>[:<port>]/<category>/<repo>/tarball/<ref>
 // e.g.: http://localhost:8080/client/person/tarball/master
@@ -321,9 +323,10 @@ function redirectForTarball(req, res) {
       res.send(404);
       return;
     }
-    // Redirect if we don't have a pretty name
-    res.redirect(req.originalUrl + '/' + req.params.cat + '-' + req.params.repo + '-' + req.params.ref + '.tar.gz')
   });
+  // Redirect if we don't have a pretty name
+  var url = req.originalUrl.replace(/^\/repos\//, '/') + '/' + req.params.cat + '-' + req.params.repo + '-' + req.params.ref + '.tar.gz';
+  res.redirect(url);
 }
 
 
