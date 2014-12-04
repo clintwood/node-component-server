@@ -60,7 +60,7 @@ app.get('/status', function (req, res) {
   if (canCompress(req)) {
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Content-Encoding': 'gzip'
+      'content-encoding': 'gzip'
     });
     zlib.gzip(msg, function (err, data) {
       res.write(data);
@@ -102,7 +102,7 @@ app.get('/repos/ls', function (req, res) {
   // compress if requested
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   if (canCompress(req)) {
-    res.setHeader('Content-Encoding', 'gzip');
+    res.setHeader('content-encoding', 'gzip');
     var gzip = zlib.createGzip();
     cmd.stdout.pipe(gzip).pipe(res);
   } else {
@@ -213,7 +213,7 @@ app.get('/repos/:cat/:repo/tags', function (req, res) {
       var out = JSON.stringify(tags);
       // compress if requested
       if (canCompress(req)) {
-        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('content-encoding', 'gzip');
         zlib.gzip(out, function (err, data) {
           res.write(data);
           res.end();
@@ -287,7 +287,7 @@ app.get('/repos/:cat/:repo/git/trees/:ref', function (req, res) {
       var out = JSON.stringify(tree);
       // compress if requested
       if (canCompress(req)) {
-        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('content-encoding', 'gzip');
         zlib.gzip(out, function (err, data) {
           res.write(data);
           res.end();
@@ -343,13 +343,22 @@ app.get('/:cat/:repo/tarball/:ref/:name', function (req, res) {
     }
 
     // Spawn out to git archive to retrieve required file
-    var git_archive = spawn('git', ['archive', '--format=tar', '--prefix=' + req.params.name + '/', req.params.ref], {
+    console.log('--prefix=' + req.params.name + '/')
+    console.log(req.params.ref)
+    console.log(repoDir + '/' + repopath)
+    
+    var git_archive = spawn('git', ['archive', '--format=tar.gz', '--prefix=' + req.params.name + '/', req.params.ref], {
       cwd: repoDir + '/' + repopath
     });
 
-    res.setHeader('Content-Encoding', 'gzip');
-    var gzip = zlib.createGzip();
-    git_archive.stdout.pipe(gzip).pipe(res);
+    // compress if requested
+    if (canCompress(req)) {
+      var gzip = zlib.createGzip();
+      res.setHeader('content-encoding', 'gzip');
+      git_archive.stdout.pipe(gzip).pipe(res);
+     } else {
+      git_archive.stdout.pipe(res);
+     }
   });
 });
 
@@ -391,7 +400,7 @@ app.get('/:cat/:repo/:ref/*', function (req, res) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       // compress if requested
       if (canCompress(req)) {
-        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('content-encoding', 'gzip');
         var gzip = zlib.createGzip();
         // set to pipe through gzip directly out to http response
         git_show.stdout.pipe(gzip).pipe(res);

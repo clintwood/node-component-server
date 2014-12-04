@@ -2,7 +2,7 @@
   "name": "node-component-server",
   "description": "HTTP Git repo server for in-house development.",
   "private": true,
-  "version": "0.1.9",
+  "version": "0.1.10",
   "dependencies": {
     "win-spawn": "2.x",
     "express": "3.x",
